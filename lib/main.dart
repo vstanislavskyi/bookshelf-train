@@ -1,5 +1,7 @@
 import 'package:bookshelf/book_notes_page.dart';
+import 'package:bookshelf/database.dart';
 import 'package:bookshelf/model/Book.dart';
+import 'package:bookshelf/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:http/http.dart' as http;
@@ -41,14 +43,14 @@ class _BooksSearchPageState extends State<BooksSearchPage> {
     subject.stream
         .debounce(new Duration(milliseconds: 600))
         .listen(_textChanged);
-    //BookDatabase.get().init();
+    BookDatabase.get().init();
   }
 
   @override
   void dispose() {
     super.dispose();
     subject.close();
-    //BookDatabase.get().close();
+    BookDatabase.get().close();
   }
 
   @override
@@ -152,29 +154,24 @@ class BookCardState extends State<BookCard> {
   void initState() {
     super.initState();
     bookState = widget.book;
-//    BookDatabase.get().getBook(widget.book.id).then((book) {
-//      if (book == null) return;
-//      setState(() {
-//        bookState = book;
-//      });
-//    });
+    BookDatabase.get().getBook(widget.book.id).then((book) {
+      if (book == null) return;
+      setState(() {
+        bookState = book;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return new GestureDetector(
       onTap: () {
-        print('BookCardState.onTap');
-        Navigator.push(
-          context,
-          new MaterialPageRoute(
-              builder: (context) => new BookNotesPage(book: bookState)),
-        );
-//        Navigator.of(context).push(new FadeRouter(
-//              builder: (BuildContext context) => new BookNotesPage(bookState),
-//              settings:
-//                  new RouteSettings(name: '/notes', isInitialRoute: false),
-//            ));
+        Navigator.of(context).push(new FadeRoute(
+              builder: (BuildContext context) =>
+                  new BookNotesPage(book: bookState),
+              settings:
+                  new RouteSettings(name: '/notes', isInitialRoute: false),
+            ));
       },
       child: new Card(
         child: new Container(
@@ -211,7 +208,7 @@ class BookCardState extends State<BookCard> {
                             setState(() {
                               bookState.starred = !bookState.starred;
                             });
-                            //BookDatabase.get().updateBook(bookState);
+                            BookDatabase.get().updateBook(bookState);
                           }),
                       alignment: Alignment.topRight,
                     )
