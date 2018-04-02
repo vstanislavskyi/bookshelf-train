@@ -1,3 +1,5 @@
+import 'package:bookshelf/book_notes_page.dart';
+import 'package:bookshelf/model/Book.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:http/http.dart' as http;
@@ -9,16 +11,14 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
-      title: 'Books search',
-      home: new BooksSearchPage(title: 'Books search'),
-    );
+    return new MaterialApp(title: 'Books search',
+        //home: new BooksSearchPage(title: 'Books search'),
+        routes: {
+          '/': (BuildContext context) => new BooksSearchPage(
+                title: 'Book search',
+              ),
+        });
   }
-}
-
-class Book {
-  String title, url;
-  Book({this.title, this.url});
 }
 
 class BooksSearchPage extends StatefulWidget {
@@ -41,6 +41,14 @@ class _BooksSearchPageState extends State<BooksSearchPage> {
     subject.stream
         .debounce(new Duration(milliseconds: 600))
         .listen(_textChanged);
+    //BookDatabase.get().init();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    subject.close();
+    //BookDatabase.get().close();
   }
 
   @override
@@ -65,19 +73,8 @@ class _BooksSearchPageState extends State<BooksSearchPage> {
                     padding: const EdgeInsets.all(8.0),
                     itemCount: _items.length,
                     itemBuilder: (context, index) {
-                      final item = _items[index];
-                      return new Card(
-                        child: new Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: new Row(
-                            children: <Widget>[
-                              item.url != null
-                                  ? new Image.network(item.url)
-                                  : new Container(),
-                              new Flexible(child: new Text(item.title)),
-                            ],
-                          ),
-                        ),
+                      return new BookCard(
+                        book: _items[index],
                       );
                     }))
           ],
@@ -101,6 +98,7 @@ class _BooksSearchPageState extends State<BooksSearchPage> {
   void _addBook(dynamic book) {
     setState(() {
       _items.add(new Book(
+          id: book["id"],
           title: book["volumeInfo"]["title"],
           url: book["volumeInfo"]["imageLinks"]["smallThumbnail"]));
     });
@@ -135,5 +133,96 @@ class _BooksSearchPageState extends State<BooksSearchPage> {
             _isLoading = false;
           });
         });
+  }
+}
+
+class BookCard extends StatefulWidget {
+  final Book book;
+
+  BookCard({this.book});
+
+  @override
+  State<StatefulWidget> createState() => new BookCardState();
+}
+
+class BookCardState extends State<BookCard> {
+  Book bookState;
+
+  @override
+  void initState() {
+    super.initState();
+    bookState = widget.book;
+//    BookDatabase.get().getBook(widget.book.id).then((book) {
+//      if (book == null) return;
+//      setState(() {
+//        bookState = book;
+//      });
+//    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return new GestureDetector(
+      onTap: () {
+        print('BookCardState.onTap');
+        Navigator.push(
+          context,
+          new MaterialPageRoute(
+              builder: (context) => new BookNotesPage(book: bookState)),
+        );
+//        Navigator.of(context).push(new FadeRouter(
+//              builder: (BuildContext context) => new BookNotesPage(bookState),
+//              settings:
+//                  new RouteSettings(name: '/notes', isInitialRoute: false),
+//            ));
+      },
+      child: new Card(
+        child: new Container(
+          height: 200.0,
+          child: new Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: new Row(
+              children: <Widget>[
+                widget.book.url != null
+                    ? new Hero(
+                        tag: bookState.id,
+                        child: new Image.network(bookState.url))
+                    : new Container(),
+                new Expanded(
+                    child: new Stack(
+                  children: <Widget>[
+                    new Align(
+                      child: new Padding(
+                        child: new Text(
+                          bookState.title,
+                          maxLines: 10,
+                        ),
+                        padding: new EdgeInsets.all(8.0),
+                      ),
+                      alignment: Alignment.center,
+                    ),
+                    new Align(
+                      child: new IconButton(
+                          icon: bookState.starred
+                              ? new Icon(Icons.star)
+                              : new Icon(Icons.star_border),
+                          color: Colors.black,
+                          onPressed: () {
+                            setState(() {
+                              bookState.starred = !bookState.starred;
+                            });
+                            //BookDatabase.get().updateBook(bookState);
+                          }),
+                      alignment: Alignment.topRight,
+                    )
+                  ],
+                )),
+                //new Flexible(child: new Text(bookState.title)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
