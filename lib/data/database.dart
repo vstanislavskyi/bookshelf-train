@@ -11,6 +11,7 @@ class BookDatabase {
   final String tableName = "Books";
 
   Database db;
+  bool didInit = false;
 
   static BookDatabase get() {
     return _bookDatabase;
@@ -18,7 +19,12 @@ class BookDatabase {
 
   BookDatabase._internal();
 
-  Future init() async {
+  Future<Database> _getDb() async {
+    if (!didInit) await _init();
+    return db;
+  }
+
+  Future _init() async {
     Directory documentDirectory = await getApplicationDocumentsDirectory();
     String path = join(documentDirectory.path, "book_db.db");
 
@@ -32,9 +38,11 @@ class BookDatabase {
           "${Book.db_notes} TEXT"
           ")");
     });
+    didInit = true;
   }
 
   Future<Book> getBook(String id) async {
+    var db = await _getDb();
     var result = await db
         .rawQuery('SELECT * FROM $tableName WHERE ${Book.db_id} = "$id"');
     if (result.length == 0) return null;
@@ -43,6 +51,7 @@ class BookDatabase {
   }
 
   Future updateBook(Book book) async {
+    var db = await _getDb();
     final String sql = 'INSERT OR REPLACE INTO '
         '$tableName(${Book.db_id}, ${Book.db_title}, ${Book.db_url}, ${Book.db_star}, ${Book.db_notes})'
         '  VALUES("${book.id}", "${book.title}", "${book.url}", ${book.starred? 1:0}, "${book.notes}")';
@@ -54,6 +63,32 @@ class BookDatabase {
   }
 
   Future close() async {
+    var db = await _getDb();
     return db.close();
+  }
+
+  Future<List<Book>> getBooks(List<String> ids) async {
+    var db = await _getDb();
+    var idsString = ids.map((it) => '"$it"').join(',');
+    var result = await db.rawQuery(
+        'SELECT * FROM $tableName WHERE ${Book.db_id} IN ($idsString)');
+    var books = [];
+
+    for (Map<String, dynamic> item in result) {
+      books.add(new Book.fromMap(item));
+    }
+    return books;
+  }
+
+  Future<List<Book>> getFavoriteBooks() async {
+    var db = await _getDb();
+    var result = await db
+        .rawQuery('SELECT * FROM $tableName WHERE ${Book.db_star} = "1"');
+    if (result.length == 0) return [];
+    var books = [];
+    for (Map<String, dynamic> map in result) {
+      books.add(new Book.fromMap(map));
+    }
+    return books;
   }
 }

@@ -1,4 +1,4 @@
-import 'package:bookshelf/database.dart';
+import 'package:bookshelf/data/database.dart';
 import 'package:bookshelf/model/Book.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
