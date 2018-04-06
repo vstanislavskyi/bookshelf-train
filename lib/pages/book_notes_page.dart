@@ -1,4 +1,4 @@
-import 'package:bookshelf/data/database.dart';
+import 'package:bookshelf/data/repository.dart';
 import 'package:bookshelf/model/Book.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
@@ -29,7 +29,7 @@ class _BookNotesPageState extends State<BookNotesPage> {
     _textController = new TextEditingController(text: widget.book.notes);
     subject.stream.debounce(new Duration(milliseconds: 600)).listen((text) {
       widget.book.notes = text;
-      BookDatabase.get().updateBook(widget.book);
+      Repository.get().update(widget.book);
     });
   }
 

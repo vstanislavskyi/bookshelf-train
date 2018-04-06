@@ -72,6 +72,10 @@ class Repository {
     database.updateBook(book);
   }
 
+  Future<List<Book>> getFavoriteBooks() {
+    return database.getFavoriteBooks();
+  }
+
   Future close() async {
     return database.close();
   }

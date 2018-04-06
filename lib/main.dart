@@ -1,3 +1,4 @@
+import 'package:bookshelf/pages/book_collection_page.dart';
 import 'package:bookshelf/pages/book_search_page.dart';
 import 'package:bookshelf/pages/home_page.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +15,7 @@ class MyApp extends StatelessWidget {
           '/': (BuildContext context) => new HomePage(),
           '/search': (BuildContext context) =>
               new BooksSearchPage(title: 'Book search'),
-          //'/collection': (BuildContext context) => new CollectionPage(),
+          '/collection': (BuildContext context) => new BookCollectionPage(),
         });
   }
 }
